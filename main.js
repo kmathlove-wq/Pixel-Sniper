@@ -134,10 +134,11 @@ function shoot() {
 }
 
 // Input events
-document.addEventListener('click', shoot);
 document.addEventListener('contextmenu', (e) => e.preventDefault());
 document.addEventListener('mousedown', (e) => {
-  if (e.button === 2 && controls.isLocked) {
+  if (e.button === 0) {
+    shoot();
+  } else if (e.button === 2 && controls.isLocked) {
     isAiming = true;
     scopeOverlay.style.display = 'block';
     crosshairEl.style.display = 'none';
@@ -189,15 +190,15 @@ mtlLoader.load('models/obj.mtl', (materials) => {
     const scopeMat = new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.8, roughness: 0.3 });
     const scopeTube = new THREE.Mesh(new THREE.CylinderGeometry(5, 5, 100, 16), scopeMat);
     scopeTube.rotation.z = Math.PI / 2;
-    scopeTube.position.set(10, 40, 0);
+    scopeTube.position.set(20, 58, 0);
     const capMat = new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.9, roughness: 0.2 });
     const capGeo = new THREE.CylinderGeometry(5.5, 5.5, 3, 16);
     const capFront = new THREE.Mesh(capGeo, capMat);
     capFront.rotation.z = Math.PI / 2;
-    capFront.position.set(60, 40, 0);
+    capFront.position.set(80, 58, 0);
     const capRear = new THREE.Mesh(capGeo, capMat);
     capRear.rotation.z = Math.PI / 2;
-    capRear.position.set(-40, 40, 0);
+    capRear.position.set(-40, 58, 0);
     gunWrapper.add(scopeTube, capFront, capRear);
 
     gunWrapper.scale.setScalar(HIP.scale);

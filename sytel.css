@@ -95,7 +95,7 @@ body {
   display: none;
   pointer-events: none;
   z-index: 6;
-  background: radial-gradient(circle 158px at center, transparent 155px, rgba(0,0,0,0.97) 162px);
+  background: transparent;
 }
 
 #scope-overlay svg {
