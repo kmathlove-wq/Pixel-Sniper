@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pixel Sniper</title>
+  <link rel="stylesheet" href="sytel.css" />
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <canvas id="c"></canvas>
+
+  <div id="overlay">
+    <div class="overlay-content">
+      <h1>PIXEL SNIPER</h1>
+      <p>클릭하여 게임 시작</p>
+      <small>ESC로 일시정지</small>
+    </div>
+  </div>
+
+  <div id="crosshair">+</div>
+
+  <div id="hud">
+    <span id="score">SCORE: 0</span>
+    <span id="ammo">AMMO: 10</span>
+  </div>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>
