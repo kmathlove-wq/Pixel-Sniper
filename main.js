@@ -2,6 +2,19 @@ import * as THREE from 'three';
 import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
 import { MTLLoader } from 'three/addons/loaders/MTLLoader.js';
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js';
+import { getDatabase, ref, push, get } from 'https://www.gstatic.com/firebasejs/10.14.0/firebase-database.js';
+
+const firebaseApp = initializeApp({
+  apiKey: "AIzaSyCl-zVnHgUwinHbCp2QdjX8JGdY0_xM9YQ",
+  authDomain: "pixel-sniper.firebaseapp.com",
+  databaseURL: "https://pixel-sniper-default-rtdb.firebaseio.com",
+  projectId: "pixel-sniper",
+  storageBucket: "pixel-sniper.firebasestorage.app",
+  messagingSenderId: "819821964767",
+  appId: "1:819821964767:web:8ca15de491cdcbb2c5686a"
+});
+const db = getDatabase(firebaseApp);
 
 const canvas = document.getElementById('c');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -143,20 +156,32 @@ function resetTimer() {
 }
 
 function saveRecord(ms) {
-  const records = getRecords();
-  records.push({ time: ms, date: new Date().toISOString() });
-  localStorage.setItem('pixelSniperRecords', JSON.stringify(records));
+  const local = getLocalRecords();
+  local.push({ time: ms, date: new Date().toISOString() });
+  localStorage.setItem('pixelSniperRecords', JSON.stringify(local));
+  push(ref(db, 'leaderboard'), { time: ms, date: new Date().toISOString() }).catch(() => {});
 }
 
-function getRecords() {
+function getLocalRecords() {
   try { return JSON.parse(localStorage.getItem('pixelSniperRecords') || '[]'); }
   catch { return []; }
 }
 
-function openRecordsModal() {
-  const records = getRecords();
-  const sorted = [...records].sort((a, b) => a.time - b.time);
-  const top10 = sorted.slice(0, 10);
+async function openRecordsModal() {
+  document.getElementById('records-modal').classList.remove('hidden');
+  document.getElementById('records-list').innerHTML = '<li class="no-record">불러오는 중...</li>';
+  document.getElementById('my-latest-record').style.display = 'none';
+
+  let top10 = [];
+  try {
+    const snapshot = await get(ref(db, 'leaderboard'));
+    const all = [];
+    snapshot.forEach(child => all.push(child.val()));
+    top10 = all.sort((a, b) => a.time - b.time).slice(0, 10);
+  } catch {
+    top10 = getLocalRecords().sort((a, b) => a.time - b.time).slice(0, 10);
+  }
+
   const listEl = document.getElementById('records-list');
   listEl.innerHTML = top10.length === 0
     ? '<li class="no-record">아직 기록이 없어요</li>'
@@ -164,16 +189,16 @@ function openRecordsModal() {
         const date = new Date(r.date).toLocaleDateString('ko-KR');
         return `<li><span class="rank-num">${i + 1}위</span><span class="rank-time">${formatTime(r.time)}</span><span class="rank-date">${date}</span></li>`;
       }).join('');
+
+  const local = getLocalRecords();
   const latestEl = document.getElementById('my-latest-record');
-  if (records.length > 0) {
-    const latest = records[records.length - 1];
-    const latestRank = sorted.findIndex(r => r.time === latest.time && r.date === latest.date) + 1;
-    latestEl.innerHTML = `<div class="my-latest">내 최근 기록 (${latestRank}위)<br><span class="rank-time">${formatTime(latest.time)}</span></div>`;
+  if (local.length > 0) {
+    const latest = local[local.length - 1];
+    const allSorted = top10;
+    const rank = allSorted.findIndex(r => r.time >= latest.time) + 1 || allSorted.length + 1;
+    latestEl.innerHTML = `<div class="my-latest">내 최근 기록<br><span class="rank-time">${formatTime(latest.time)}</span></div>`;
     latestEl.style.display = 'block';
-  } else {
-    latestEl.style.display = 'none';
   }
-  document.getElementById('records-modal').classList.remove('hidden');
 }
 
 function closeRecordsModal() {
