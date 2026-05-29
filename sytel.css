@@ -280,6 +280,16 @@ body {
   display: none !important;
 }
 
+#map-credit {
+  position: fixed;
+  bottom: 12px;
+  right: 16px;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 11px;
+  pointer-events: none;
+  z-index: 10;
+}
+
 #scope-overlay svg {
   position: absolute;
   top: 50%;

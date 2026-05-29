@@ -22,8 +22,8 @@ renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setSize(window.innerWidth, window.innerHeight);
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x1a1a2e);
-scene.fog = new THREE.Fog(0x1a1a2e, 400, 700);
+scene.background = new THREE.Color(0x87CEEB);
+scene.fog = new THREE.Fog(0xC8E6FA, 600, 1100);
 
 const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 2000);
 camera.position.set(0, 50, 150);
@@ -48,23 +48,66 @@ controls.addEventListener('unlock', () => {
 });
 
 // Lights
-scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+scene.add(new THREE.AmbientLight(0xffffff, 1.0));
 
-const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+const dirLight = new THREE.DirectionalLight(0xffffff, 1.0);
 dirLight.position.set(100, 200, 100);
 scene.add(dirLight);
 
-const rimLight = new THREE.DirectionalLight(0x8888ff, 0.4);
-rimLight.position.set(-100, -50, -100);
-scene.add(rimLight);
+const hemiLight = new THREE.HemisphereLight(0x87CEEB, 0xDDDDDD, 0.5);
+scene.add(hemiLight);
 
-// Ground
-const ground = new THREE.Mesh(
-  new THREE.PlaneGeometry(1200, 1200),
-  new THREE.MeshStandardMaterial({ color: 0x2a2a3a })
-);
-ground.rotation.x = -Math.PI / 2;
-scene.add(ground);
+// Arena floor platform
+const platformMat = new THREE.MeshStandardMaterial({ color: 0xE8E8E8, roughness: 0.85 });
+const platform = new THREE.Mesh(new THREE.BoxGeometry(950, 80, 950), platformMat);
+platform.position.set(0, -40, 0);
+scene.add(platform);
+
+// Arena walls
+const wallMat = new THREE.MeshStandardMaterial({ color: 0xD8D8D8, roughness: 0.8 });
+[
+  [0, 60, -475, 950, 120, 22],
+  [0, 60,  475, 950, 120, 22],
+  [475, 60, 0, 22, 120, 950],
+  [-475, 60, 0, 22, 120, 950],
+].forEach(([x, y, z, w, h, d]) => {
+  const wall = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), wallMat);
+  wall.position.set(x, y, z);
+  scene.add(wall);
+});
+
+// Interior structures
+const structMat = new THREE.MeshStandardMaterial({ color: 0xDDDDDD, roughness: 0.9 });
+[
+  [-130, -80,  80,  60,  70],
+  [ 130, -80,  80,  60,  70],
+  [   0,-190,  60,  60, 110],
+  [-210,-210, 110,  50,  60],
+  [ 210,-210, 110,  50,  60],
+  [ -90,-320,  50,  90,  65],
+  [  90,-320,  50,  90,  65],
+  [   0,-370, 130,  40,  50],
+].forEach(([x, z, w, d, h]) => {
+  const s = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), structMat);
+  s.position.set(x, h / 2, z);
+  scene.add(s);
+});
+
+// Cloud planes below arena
+const cloudMat = new THREE.MeshBasicMaterial({ color: 0xFFFFFF, transparent: true, opacity: 0.65, side: THREE.DoubleSide });
+for (let i = 0; i < 15; i++) {
+  const cloud = new THREE.Mesh(
+    new THREE.PlaneGeometry(200 + Math.random() * 350, 80 + Math.random() * 130),
+    cloudMat
+  );
+  cloud.rotation.x = -Math.PI / 2;
+  cloud.position.set(
+    (Math.random() - 0.5) * 3000,
+    -150 - Math.random() * 120,
+    (Math.random() - 0.5) * 3000
+  );
+  scene.add(cloud);
+}
 
 // Targets
 const targets = [];
@@ -77,9 +120,9 @@ function spawnTargets() {
       new THREE.MeshStandardMaterial({ color: 0xff4444 })
     );
     mesh.position.set(
-      (Math.random() - 0.5) * 400,
+      (Math.random() - 0.5) * 750,
       12.5,
-      -100 - Math.random() * 350
+      -50 - Math.random() * 350
     );
     scene.add(mesh);
     targets.push(mesh);
