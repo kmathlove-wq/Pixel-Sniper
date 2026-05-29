@@ -22,8 +22,17 @@ const overlay = document.getElementById('overlay');
 const scopeOverlay = document.getElementById('scope-overlay');
 const crosshairEl = document.getElementById('crosshair');
 overlay.addEventListener('click', () => controls.lock());
-controls.addEventListener('lock', () => overlay.classList.add('hidden'));
-controls.addEventListener('unlock', () => overlay.classList.remove('hidden'));
+controls.addEventListener('lock', () => {
+  overlay.classList.add('hidden');
+  if (!gameActive && !gameComplete) startTimer();
+});
+controls.addEventListener('unlock', () => {
+  if (gameComplete) {
+    document.getElementById('completion-message').classList.remove('hidden');
+  } else {
+    overlay.classList.remove('hidden');
+  }
+});
 
 // Lights
 scene.add(new THREE.AmbientLight(0xffffff, 0.6));
@@ -48,19 +57,22 @@ scene.add(ground);
 const targets = [];
 const targetGeo = new THREE.BoxGeometry(25, 25, 25);
 
-for (let i = 0; i < 8; i++) {
-  const mesh = new THREE.Mesh(
-    targetGeo,
-    new THREE.MeshStandardMaterial({ color: 0xff4444 })
-  );
-  mesh.position.set(
-    (Math.random() - 0.5) * 400,
-    12.5,
-    -100 - Math.random() * 350
-  );
-  scene.add(mesh);
-  targets.push(mesh);
+function spawnTargets() {
+  for (let i = 0; i < 8; i++) {
+    const mesh = new THREE.Mesh(
+      targetGeo,
+      new THREE.MeshStandardMaterial({ color: 0xff4444 })
+    );
+    mesh.position.set(
+      (Math.random() - 0.5) * 400,
+      12.5,
+      -100 - Math.random() * 350
+    );
+    scene.add(mesh);
+    targets.push(mesh);
+  }
 }
+spawnTargets();
 
 // Muzzle flash (camera child)
 const muzzleLight = new THREE.PointLight(0xffaa00, 0, 60);
@@ -84,12 +96,100 @@ const ADS = { x: 0,      y: -0.11, z: -0.394, fov: 15, scale: 0.002  };
 // Game state
 let score = 0;
 let ammo = 10;
+let timerStart = null;
+let timerInterval = null;
+let gameActive = false;
+let gameComplete = false;
 let gunWrapper = null;
 let scopeGroup = null;
 
 function updateHUD() {
   document.getElementById('score').textContent = `SCORE: ${score}`;
   document.getElementById('ammo').textContent = `AMMO: ${ammo}`;
+}
+
+function formatTime(ms) {
+  const cs = Math.floor(ms / 10) % 100;
+  const sec = Math.floor(ms / 1000) % 60;
+  const min = Math.floor(ms / 60000);
+  return `${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}.${String(cs).padStart(2,'0')}`;
+}
+
+function startTimer() {
+  timerStart = Date.now();
+  gameActive = true;
+  timerInterval = setInterval(() => {
+    document.getElementById('timer').textContent = formatTime(Date.now() - timerStart);
+  }, 50);
+}
+
+function stopTimer() {
+  clearInterval(timerInterval);
+  timerInterval = null;
+  const finalTime = Date.now() - timerStart;
+  gameActive = false;
+  gameComplete = true;
+  saveRecord(finalTime);
+  document.getElementById('completion-time').textContent = `완료!  ${formatTime(finalTime)}`;
+  controls.unlock();
+}
+
+function resetTimer() {
+  clearInterval(timerInterval);
+  timerInterval = null;
+  timerStart = null;
+  gameActive = false;
+  document.getElementById('timer').textContent = '00:00.00';
+}
+
+function saveRecord(ms) {
+  const records = getRecords();
+  records.push({ time: ms, date: new Date().toISOString() });
+  localStorage.setItem('pixelSniperRecords', JSON.stringify(records));
+}
+
+function getRecords() {
+  try { return JSON.parse(localStorage.getItem('pixelSniperRecords') || '[]'); }
+  catch { return []; }
+}
+
+function openRecordsModal() {
+  const records = getRecords();
+  const sorted = [...records].sort((a, b) => a.time - b.time);
+  const top10 = sorted.slice(0, 10);
+  const listEl = document.getElementById('records-list');
+  listEl.innerHTML = top10.length === 0
+    ? '<li class="no-record">아직 기록이 없어요</li>'
+    : top10.map(r => {
+        const date = new Date(r.date).toLocaleDateString('ko-KR');
+        return `<li><span class="rank-time">${formatTime(r.time)}</span><span class="rank-date">${date}</span></li>`;
+      }).join('');
+  const latestEl = document.getElementById('my-latest-record');
+  if (records.length > 0) {
+    const latest = records[records.length - 1];
+    const latestRank = sorted.findIndex(r => r.time === latest.time && r.date === latest.date) + 1;
+    latestEl.innerHTML = `<div class="my-latest">내 최근 기록 (${latestRank}위)<br><span class="rank-time">${formatTime(latest.time)}</span></div>`;
+    latestEl.style.display = 'block';
+  } else {
+    latestEl.style.display = 'none';
+  }
+  document.getElementById('records-modal').classList.remove('hidden');
+}
+
+function closeRecordsModal() {
+  document.getElementById('records-modal').classList.add('hidden');
+}
+
+function restartGame() {
+  targets.forEach(t => scene.remove(t));
+  targets.length = 0;
+  spawnTargets();
+  score = 0;
+  ammo = 10;
+  resetTimer();
+  document.getElementById('completion-message').classList.add('hidden');
+  updateHUD();
+  controls.lock();
 }
 
 function spawnHitEffect(point) {
@@ -129,6 +229,7 @@ function shoot() {
     score++;
     updateHUD();
     spawnHitEffect(hits[0].point);
+    if (targets.length === 0) stopTimer();
   }
 
   gunRecoil();
@@ -209,6 +310,16 @@ mtlLoader.load('models/obj.mtl', (materials) => {
     gunWrapper.position.set(HIP.x, HIP.y, HIP.z);
     camera.add(gunWrapper);
   });
+});
+
+document.getElementById('records-btn').addEventListener('click', openRecordsModal);
+document.getElementById('modal-close-btn').addEventListener('click', closeRecordsModal);
+document.getElementById('records-modal').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('records-modal')) closeRecordsModal();
+});
+document.getElementById('restart-btn').addEventListener('click', () => {
+  gameComplete = false;
+  restartGame();
 });
 
 window.addEventListener('resize', () => {

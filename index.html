@@ -42,7 +42,24 @@
 
   <div id="hud">
     <span id="score">SCORE: 0</span>
+    <span id="timer">00:00.00</span>
     <span id="ammo">AMMO: 10</span>
+  </div>
+
+  <div id="completion-message" class="hidden">
+    <p id="completion-time"></p>
+    <button id="restart-btn">다시 시작</button>
+  </div>
+
+  <button id="records-btn">기록보기</button>
+
+  <div id="records-modal" class="hidden">
+    <div id="records-modal-inner">
+      <h2>기록 순위</h2>
+      <ol id="records-list"></ol>
+      <div id="my-latest-record" style="display:none"></div>
+      <button id="modal-close-btn">닫기</button>
+    </div>
   </div>
 
   <script type="module" src="main.js"></script>
