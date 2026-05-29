@@ -63,6 +63,9 @@ const platform = new THREE.Mesh(new THREE.BoxGeometry(950, 80, 950), platformMat
 platform.position.set(0, -40, 0);
 scene.add(platform);
 
+// Collidable bounding boxes (walls + structures)
+const collidables = [];
+
 // Arena walls
 const wallMat = new THREE.MeshStandardMaterial({ color: 0xD8D8D8, roughness: 0.8 });
 [
@@ -74,6 +77,7 @@ const wallMat = new THREE.MeshStandardMaterial({ color: 0xD8D8D8, roughness: 0.8
   const wall = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), wallMat);
   wall.position.set(x, y, z);
   scene.add(wall);
+  collidables.push({ minX: x-w/2, maxX: x+w/2, minY: y-h/2, maxY: y+h/2, minZ: z-d/2, maxZ: z+d/2 });
 });
 
 // Interior structures
@@ -91,6 +95,7 @@ const structMat = new THREE.MeshStandardMaterial({ color: 0xDDDDDD, roughness: 0
   const s = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), structMat);
   s.position.set(x, h / 2, z);
   scene.add(s);
+  collidables.push({ minX: x-w/2, maxX: x+w/2, minY: 0, maxY: h, minZ: z-d/2, maxZ: z+d/2 });
 });
 
 // Cloud planes below arena
@@ -113,17 +118,27 @@ for (let i = 0; i < 15; i++) {
 const targets = [];
 const targetGeo = new THREE.BoxGeometry(25, 25, 25);
 
+function isValidTargetPos(x, z) {
+  const TR = 30;
+  for (const t of targets) {
+    if (Math.abs(t.position.x - x) < TR * 2 && Math.abs(t.position.z - z) < TR * 2) return false;
+  }
+  for (const box of collidables) {
+    if (x + TR > box.minX && x - TR < box.maxX && z + TR > box.minZ && z - TR < box.maxZ) return false;
+  }
+  return true;
+}
+
 function spawnTargets() {
   for (let i = 0; i < 8; i++) {
-    const mesh = new THREE.Mesh(
-      targetGeo,
-      new THREE.MeshStandardMaterial({ color: 0xff4444 })
-    );
-    mesh.position.set(
-      (Math.random() - 0.5) * 750,
-      12.5,
-      -50 - Math.random() * 350
-    );
+    let x, z, attempts = 0;
+    do {
+      x = (Math.random() - 0.5) * 750;
+      z = -50 - Math.random() * 350;
+      attempts++;
+    } while (!isValidTargetPos(x, z) && attempts < 50);
+    const mesh = new THREE.Mesh(targetGeo, new THREE.MeshStandardMaterial({ color: 0xff4444 }));
+    mesh.position.set(x, 12.5, z);
     scene.add(mesh);
     targets.push(mesh);
   }
@@ -414,6 +429,22 @@ function animate() {
     if (camera.position.y <= GROUND_Y) {
       camera.position.y = GROUND_Y;
       verticalVelocity = 0;
+    }
+
+    // AABB collision with walls and structures
+    const R = 18;
+    for (const box of collidables) {
+      if (camera.position.y - GROUND_Y > box.maxY) continue;
+      const cx = camera.position.x, cz = camera.position.z;
+      const overlapX = Math.min(cx + R, box.maxX) - Math.max(cx - R, box.minX);
+      if (overlapX <= 0) continue;
+      const overlapZ = Math.min(cz + R, box.maxZ) - Math.max(cz - R, box.minZ);
+      if (overlapZ <= 0) continue;
+      if (overlapX <= overlapZ) {
+        camera.position.x += cx < (box.minX + box.maxX) / 2 ? -overlapX : overlapX;
+      } else {
+        camera.position.z += cz < (box.minZ + box.maxZ) / 2 ? -overlapZ : overlapZ;
+      }
     }
   }
 
