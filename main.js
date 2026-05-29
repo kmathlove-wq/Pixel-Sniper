@@ -79,7 +79,7 @@ const GRAVITY = 250;
 // ADS
 let isAiming = false;
 const HIP = { x: 0.2,  y: -0.18, z: -0.45, fov: 45,   scale: 0.002  };
-const ADS = { x: 0,    y: -0.06, z: -0.32, fov: 15,   scale: 0.0012 };
+const ADS = { x: 0,    y: -0.11, z: -0.394, fov: 15,   scale: 0.002  };
 
 // Game state
 let score = 0;
@@ -142,7 +142,6 @@ document.addEventListener('mousedown', (e) => {
     isAiming = true;
     scopeOverlay.style.display = 'block';
     crosshairEl.style.display = 'none';
-    if (gunWrapper) gunWrapper.visible = false;
   }
 });
 document.addEventListener('mouseup', (e) => {
@@ -150,7 +149,6 @@ document.addEventListener('mouseup', (e) => {
     isAiming = false;
     scopeOverlay.style.display = 'none';
     crosshairEl.style.display = '';
-    if (gunWrapper) gunWrapper.visible = true;
   }
 });
 
@@ -188,17 +186,17 @@ mtlLoader.load('models/obj.mtl', (materials) => {
 
     // 조준경 튜브
     const scopeMat = new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.8, roughness: 0.3 });
-    const scopeTube = new THREE.Mesh(new THREE.CylinderGeometry(5, 5, 100, 16), scopeMat);
+    const scopeTube = new THREE.Mesh(new THREE.CylinderGeometry(5, 5, 150, 16), scopeMat);
     scopeTube.rotation.z = Math.PI / 2;
-    scopeTube.position.set(20, 58, 0);
+    scopeTube.position.set(47, 55, 0);
     const capMat = new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.9, roughness: 0.2 });
     const capGeo = new THREE.CylinderGeometry(5.5, 5.5, 3, 16);
     const capFront = new THREE.Mesh(capGeo, capMat);
     capFront.rotation.z = Math.PI / 2;
-    capFront.position.set(80, 58, 0);
+    capFront.position.set(-28, 55, 0);
     const capRear = new THREE.Mesh(capGeo, capMat);
     capRear.rotation.z = Math.PI / 2;
-    capRear.position.set(-40, 58, 0);
+    capRear.position.set(122, 55, 0);
     gunWrapper.add(scopeTube, capFront, capRear);
 
     gunWrapper.scale.setScalar(HIP.scale);

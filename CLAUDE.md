@@ -4,6 +4,7 @@
 
 Three.js 기반 1인칭 FPS 스나이퍼 게임. 별도 빌드 툴 없이 순수 ES 모듈 + CDN으로 동작한다.
 Tinkercad에서 제작한 총 모델(`models/tinker.obj`)을 플레이어 무기로 사용한다.
+조준경 메시는 Three.js에서 gunWrapper 자식으로 직접 생성한다 (OBJ에 포함 아님).
 
 ## 파일 구조
 
@@ -59,7 +60,16 @@ animate()
 `shoot()` → raycaster.setFromCamera({x:0, y:0}) → intersectObjects(targets) → 적중 시 제거 + spawnHitEffect
 
 총구 방향: `gunWrapper.rotation.y = -Math.PI / 2`
-- Tinkercad OBJ의 총열이 +X 방향 → `-Math.PI/2` 회전으로 -Z(화면 안쪽) 정렬
+- Tinkercad OBJ: 배럴이 -X 방향(X=-179이 총구), 개머리판이 +X(X=135)
+- 회전 후 z_cam = x_gw × scale → 배럴(-X)이 -Z(화면 안쪽)으로 정렬
+
+조준경 메시 위치 (gunWrapper 로컬 좌표, 모델 센터 기준):
+- scopeTube: (47, 55, 0), 길이 150 — 수신기 상단(Y_gw=50)+반지름5
+- capFront: (-28, 55, 0) — 배럴쪽 (목적 렌즈, 화면 안쪽)
+- capRear: (122, 55, 0) — 개머리판쪽 (접안 렌즈, 뷰어 쪽)
+
+ADS 리얼 얼굴-조준경 공식: capRear y_cam = gunWrapper.y + 55×0.002 = 0 → gunWrapper.y = -0.11
+capRear z_cam = gunWrapper.z + 122×0.002 = -0.15 → gunWrapper.z = -0.394
 
 ## 조작키
 
