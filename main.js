@@ -160,9 +160,9 @@ function openRecordsModal() {
   const listEl = document.getElementById('records-list');
   listEl.innerHTML = top10.length === 0
     ? '<li class="no-record">아직 기록이 없어요</li>'
-    : top10.map(r => {
+    : top10.map((r, i) => {
         const date = new Date(r.date).toLocaleDateString('ko-KR');
-        return `<li><span class="rank-time">${formatTime(r.time)}</span><span class="rank-date">${date}</span></li>`;
+        return `<li><span class="rank-num">${i + 1}위</span><span class="rank-time">${formatTime(r.time)}</span><span class="rank-date">${date}</span></li>`;
       }).join('');
   const latestEl = document.getElementById('my-latest-record');
   if (records.length > 0) {

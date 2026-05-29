@@ -205,8 +205,8 @@ body {
 }
 
 #records-list {
-  list-style: decimal;
-  padding-left: 28px;
+  list-style: none;
+  padding-left: 0;
   margin-bottom: 20px;
   text-align: left;
 }
@@ -224,6 +224,11 @@ body {
   text-align: center;
   color: rgba(255,255,255,0.4);
   padding-left: 0;
+}
+
+.rank-num {
+  color: rgba(255, 255, 255, 0.5);
+  min-width: 36px;
 }
 
 .rank-time {
