@@ -79,12 +79,13 @@ const GRAVITY = 250;
 // ADS
 let isAiming = false;
 const HIP = { x: 0.2,  y: -0.18, z: -0.45, fov: 45,   scale: 0.002  };
-const ADS = { x: 0,    y: -0.11, z: -0.394, fov: 15,   scale: 0.002  };
+const ADS = { x: -0.094, y: -0.11, z: -0.394, fov: 15, scale: 0.002  };
 
 // Game state
 let score = 0;
 let ammo = 10;
 let gunWrapper = null;
+let scopeGroup = null;
 
 function updateHUD() {
   document.getElementById('score').textContent = `SCORE: ${score}`;
@@ -140,16 +141,14 @@ document.addEventListener('mousedown', (e) => {
     shoot();
   } else if (e.button === 2 && controls.isLocked) {
     isAiming = true;
-    if (gunWrapper) gunWrapper.visible = false;
-    scopeOverlay.style.display = 'block';
+    if (scopeGroup) scopeGroup.visible = true;
     crosshairEl.style.display = 'none';
   }
 });
 document.addEventListener('mouseup', (e) => {
   if (e.button === 2) {
     isAiming = false;
-    if (gunWrapper) gunWrapper.visible = true;
-    scopeOverlay.style.display = 'none';
+    if (scopeGroup) scopeGroup.visible = false;
     crosshairEl.style.display = '';
   }
 });
@@ -199,7 +198,7 @@ mtlLoader.load('models/obj.mtl', (materials) => {
     const capRear = new THREE.Mesh(capGeo, capMat);
     capRear.rotation.z = Math.PI / 2;
     capRear.position.set(122, 55, 0);
-    const scopeGroup = new THREE.Group();
+    scopeGroup = new THREE.Group();
     scopeGroup.add(scopeTube, capFront, capRear);
     scopeGroup.visible = false;
     gunWrapper.add(scopeGroup);
